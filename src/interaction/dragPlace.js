@@ -6,7 +6,8 @@ export function screenToGroundPoint(camera, ndc) {
   const ray = new THREE.Raycaster()
   ray.setFromCamera(new THREE.Vector2(ndc.x, ndc.y), camera)
   const hit = new THREE.Vector3()
-  ray.ray.intersectPlane(PLANE, hit)
+  const res = ray.ray.intersectPlane(PLANE, hit)
+  if (!res) return null
   return [hit.x, hit.y, hit.z]
 }
 
@@ -20,20 +21,21 @@ export function createDragController(renderer, camera, { onDrop }) {
   function move(e) {
     if (!dragging) return
     const p = screenToGroundPoint(camera, ndc(e))
-    dragging.mesh.position.set(...p)
+    if (p) dragging.mesh.position.set(...p)
   }
   function up(e) {
     if (!dragging) return
+    const draggingPartId = dragging.partId
     const p = screenToGroundPoint(camera, ndc(e))
-    onDrop(dragging.partId, p)
+    window.removeEventListener('pointermove', move)
     dragging = null
-    el.removeEventListener('pointermove', move)
+    onDrop(draggingPartId, p)
   }
   return {
     beginDrag(partId, mesh) {
       dragging = { partId, mesh }
-      el.addEventListener('pointermove', move)
-      el.addEventListener('pointerup', up, { once: true })
+      window.addEventListener('pointermove', move)
+      window.addEventListener('pointerup', up, { once: true })
     },
   }
 }

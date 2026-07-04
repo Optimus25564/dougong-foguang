@@ -24,6 +24,7 @@ const hud = createHud({ onChallenge: () => alert('挑战模式即将上线（MVP
 let dragMesh = null
 const drag = createDragController(S.renderer, S.camera, { onDrop })
 const tray = createTray({ onPick(partId) {
+  if (dragMesh) return
   dragMesh = buildPartMesh(partId)
   S.scene.add(dragMesh)
   drag.beginDrag(partId, dragMesh)
@@ -46,6 +47,11 @@ function showCurrentStep() {
 
 // 拖拽落点校验：松手时按吸附结果决定卡扣或回弹
 function onDrop(partId, pos) {
+  if (!pos) {
+    if (dragMesh) { S.scene.remove(dragMesh); dragMesh = null }
+    hud.setHint('再靠近目标虚影一点，对准了会自动卡扣。')
+    return
+  }
   const res = validateSnap(partId, pos)
   if (dragMesh) { S.scene.remove(dragMesh); dragMesh = null }
   const step = game.currentStep()
