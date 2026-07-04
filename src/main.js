@@ -1,7 +1,7 @@
 import './ui/styles.css'
 import { createScene } from './scene/dougongScene.js'
-import { buildPartMesh } from './scene/partFactory.js'
-import { placementFor } from './content/placements.js'
+import { buildPartMesh, buildDouMesh } from './scene/partFactory.js'
+import { placementFor, connectorsOn } from './content/placements.js'
 import { ASSEMBLY_STEPS } from './content/assemblySteps.js'
 import { createGame } from './engine/gameState.js'
 import { validateSnap } from './interaction/snapValidator.js'
@@ -111,6 +111,9 @@ function commitPlace(partId, target, dropPos) {
   showAnnotation(partId)
   codex.unlock(partId)
   if (part.hasForceAnim) forceRigs.push(createForceArrows(S.scene, mesh))
+
+  // 在这件的跳头上摆好交互斗，作为下一件的可见"落座点"
+  for (const c of connectorsOn(partId)) S.addPart(buildDouMesh(c.dims), c)
 
   showCurrentStep()
 }

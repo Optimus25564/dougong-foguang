@@ -22,3 +22,10 @@ export function buildPartMesh(partId) {
   mesh.castShadow = mesh.receiveShadow = true
   return mesh
 }
+
+// 交互斗等连接小斗：无对应 part 数据，直接按给定 dims 造一个斗
+export function buildDouMesh(dims) {
+  const mesh = new THREE.Mesh(createDouGeometry(dims), createWoodMaterial())
+  mesh.castShadow = mesh.receiveShadow = true
+  return mesh
+}
