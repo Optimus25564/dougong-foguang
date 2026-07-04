@@ -20,3 +20,8 @@ body { font-family: system-ui, "PingFang SC", sans-serif; color: #f0e6d8; }
 .codex-page { border: 1px solid #4a3a2a; border-radius: 8px; padding: 20px; text-align: center; }
 .codex-page.locked { opacity: .3; filter: grayscale(1); }
 .codex-page.unlocked { border-color: #e8c98a; }
+.hud-codex { background: #8a5a34; padding: 8px 16px; border-radius: 6px;
+  cursor: pointer; border: 1px solid #b98a5a; color: #f0e6d8; margin-top: 8px; }
+.codex-close { position: absolute; top: 20px; right: 20px; background: #8a5a34;
+  padding: 8px 16px; border-radius: 6px; cursor: pointer; border: 1px solid #b98a5a;
+  color: #f0e6d8; }

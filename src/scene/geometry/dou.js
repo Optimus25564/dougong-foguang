@@ -17,7 +17,6 @@ export function douDimensions(dims) {
 export function createDouGeometry(dims) {
   const d = douDimensions(dims)
   const geos = []
-  const half = d.width / 2
   // 欹：底面略小、顶面满宽的倒台（用缩放的 box 近似 → 用 BufferGeometry 顶点）
   const xie = new THREE.BoxGeometry(d.width, d.xieH, d.depth)
   const posAttr = xie.getAttribute('position')

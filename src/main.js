@@ -7,7 +7,7 @@ import { createGame } from './engine/gameState.js'
 import { validateSnap } from './interaction/snapValidator.js'
 import { createDragController } from './interaction/dragPlace.js'
 import { focusOn } from './teach/cameraFocus.js'
-import { applyHighlight } from './teach/highlight.js'
+import { applyHighlight, clearHighlight } from './teach/highlight.js'
 import { showAnnotation } from './teach/annotation.js'
 import { createForceArrows } from './teach/forceAnim.js'
 import { getPart } from './content/parts.js'
@@ -20,7 +20,7 @@ const S = createScene(app)
 const game = createGame()
 
 const codex = createCodex()
-const hud = createHud({ onChallenge: () => alert('挑战模式即将上线（MVP 后）') })
+const hud = createHud({ onChallenge: () => alert('挑战模式即将上线（MVP 后）'), onCodex: () => codex.open() })
 let dragMesh = null
 const drag = createDragController(S.renderer, S.camera, { onDrop })
 const tray = createTray({ onPick(partId) {
@@ -32,6 +32,7 @@ const tray = createTray({ onPick(partId) {
 document.body.append(hud.el, tray.el, codex.el)
 
 let ghost = null
+let lastHighlighted = null
 const tweens = []
 const forceRigs = []
 
@@ -73,7 +74,9 @@ function commitPlace(partId, target) {
 
   // 教学：聚焦 + 高亮 + 讲解卡
   tweens.push(focusOn(S.camera, S.controls, target.pos, { duration: 0.8 }))
+  if (lastHighlighted) clearHighlight(lastHighlighted)
   applyHighlight(mesh)
+  lastHighlighted = mesh
   showAnnotation(partId)
   codex.unlock(partId)
   if (part.hasForceAnim) forceRigs.push(createForceArrows(S.scene, mesh))
@@ -84,6 +87,7 @@ function commitPlace(partId, target) {
 function finish() {
   hud.setHint('大功告成！一朵七铺作双杪双下昂已重建。观察力如何从撩檐槫层层传落柱头。')
   hud.showChallenge()
+  codex.open()
   // 整朵受力总览：让所有受力箭头持续演示
 }
 
