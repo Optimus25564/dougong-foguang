@@ -5,6 +5,7 @@ import { placementFor } from './content/placements.js'
 import { ASSEMBLY_STEPS } from './content/assemblySteps.js'
 import { createGame } from './engine/gameState.js'
 import { validateSnap } from './interaction/snapValidator.js'
+import { createDragController } from './interaction/dragPlace.js'
 import { focusOn } from './teach/cameraFocus.js'
 import { applyHighlight } from './teach/highlight.js'
 import { showAnnotation } from './teach/annotation.js'
@@ -20,7 +21,13 @@ const game = createGame()
 
 const codex = createCodex()
 const hud = createHud({ onChallenge: () => alert('挑战模式即将上线（MVP 后）') })
-const tray = createTray({ onPick: place })
+let dragMesh = null
+const drag = createDragController(S.renderer, S.camera, { onDrop })
+const tray = createTray({ onPick(partId) {
+  dragMesh = buildPartMesh(partId)
+  S.scene.add(dragMesh)
+  drag.beginDrag(partId, dragMesh)
+} })
 document.body.append(hud.el, tray.el, codex.el)
 
 let ghost = null
@@ -37,12 +44,20 @@ function showCurrentStep() {
   ghost = S.addGhost(buildPartMesh(step.partId), placementFor(step.partId))
 }
 
-// 简化交互：拾件即视为放到目标位（MVP 用吸附校验保证正确性；拖拽落点接入见下）
-function place(partId) {
-  const target = placementFor(partId)
-  const res = validateSnap(partId, target.pos) // 直接落目标点，必然吸附
+// 拖拽落点校验：松手时按吸附结果决定卡扣或回弹
+function onDrop(partId, pos) {
+  const res = validateSnap(partId, pos)
+  if (dragMesh) { S.scene.remove(dragMesh); dragMesh = null }
   const step = game.currentStep()
-  if (!res.ok || !step || step.partId !== partId) return
+  if (!res.ok || !step || step.partId !== partId) {
+    hud.setHint('再靠近目标虚影一点，对准了会自动卡扣。')
+    return
+  }
+  commitPlace(partId, res.target)
+}
+
+// 造实体 + 教学（聚焦/高亮/讲解卡/图鉴解锁/受力动画）+ 推进流程
+function commitPlace(partId, target) {
   game.tryPlace(partId)
   if (ghost) { S.scene.remove(ghost); ghost = null }
 
