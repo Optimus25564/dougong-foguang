@@ -7,6 +7,7 @@ import { createGame } from './engine/gameState.js'
 import { validateSnap } from './interaction/snapValidator.js'
 import { createDragController } from './interaction/dragPlace.js'
 import { focusOn } from './teach/cameraFocus.js'
+import { settleTween, dismissTween, SETTLE_MS, DISMISS_MS } from './teach/motion.js'
 import { applyHighlight, clearHighlight } from './teach/highlight.js'
 import { showAnnotation } from './teach/annotation.js'
 import { createForceArrows } from './teach/forceAnim.js'
@@ -49,27 +50,39 @@ function showCurrentStep() {
 // 拖拽落点校验：松手时按吸附结果决定卡扣或回弹
 function onDrop(partId, pos) {
   if (!pos) {
-    if (dragMesh) { S.scene.remove(dragMesh); dragMesh = null }
+    dismiss()
     hud.setHint('再靠近目标虚影一点，对准了会自动卡扣。')
     return
   }
   const res = validateSnap(partId, pos)
-  if (dragMesh) { S.scene.remove(dragMesh); dragMesh = null }
   const step = game.currentStep()
   if (!res.ok || !step || step.partId !== partId) {
+    dismiss()
     hud.setHint('再靠近目标虚影一点，对准了会自动卡扣。')
     return
   }
-  commitPlace(partId, res.target)
+  dragMesh = null
+  commitPlace(partId, res.target, pos)
+}
+
+// 吸附失败：不再瞬间消失，缩小淡出后再移出场景，给手感留一点缓冲
+function dismiss() {
+  if (!dragMesh) return
+  const m = dragMesh
+  dragMesh = null
+  tweens.push(dismissTween(m, DISMISS_MS, () => S.scene.remove(m)))
 }
 
 // 造实体 + 教学（聚焦/高亮/讲解卡/图鉴解锁/受力动画）+ 推进流程
-function commitPlace(partId, target) {
+function commitPlace(partId, target, dropPos) {
   game.tryPlace(partId)
   if (ghost) { S.scene.remove(ghost); ghost = null }
 
   const mesh = buildPartMesh(partId)
-  S.addPart(mesh, target)
+  S.addPart(mesh, target) // 旋转瞬时到位；位置随后由 settleTween 接管，从落点缓缓滑入
+  const startPos = dropPos || target.pos
+  mesh.position.set(...startPos)
+  tweens.push(settleTween(mesh, startPos, target.pos, SETTLE_MS))
   const part = getPart(partId)
 
   // 教学：聚焦 + 高亮 + 讲解卡
@@ -95,6 +108,7 @@ function finish() {
 let last = performance.now()
 ;(function animate(now) {
   const dt = (now - last) / 1000; last = now
+  drag.follow(dt) // 拖拽悬停：阻尼跟随鼠标瞄准点，而非瞬移
   for (let i = tweens.length - 1; i >= 0; i--) if (tweens[i](dt)) tweens.splice(i, 1)
   for (const rig of forceRigs) rig.update(dt)
   requestAnimationFrame(animate)
