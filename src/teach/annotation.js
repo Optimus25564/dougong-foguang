@@ -2,6 +2,7 @@ import { getPart } from '../content/parts.js'
 
 let el = null
 
+// 先移除旧卡，再据部件数据生成讲解卡并挂到 body
 export function showAnnotation(partId) {
   const p = getPart(partId)
   hideAnnotation()
@@ -18,6 +19,7 @@ export function showAnnotation(partId) {
   return el
 }
 
+// 移除当前讲解卡
 export function hideAnnotation() {
   if (el && el.parentNode) el.parentNode.removeChild(el)
   el = null
