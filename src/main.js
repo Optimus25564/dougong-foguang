@@ -17,7 +17,21 @@ import { createCodex } from './ui/codex.js'
 import { createHud } from './ui/hud.js'
 
 const app = document.getElementById('app')
-const S = createScene(app)
+
+// WebGL 是本游戏的硬性前提；若创建失败（如浏览器禁用了硬件加速），
+// 明确提示而不是让整页脚本在此静默崩溃、连零件盘都挂不出来。
+let S
+try {
+  S = createScene(app)
+} catch (err) {
+  app.innerHTML = `<div style="position:fixed;inset:0;display:flex;align-items:center;
+    justify-content:center;text-align:center;padding:32px;color:#e8c98a;line-height:1.8">
+    <div>无法创建 3D 画面（WebGL 初始化失败）。<br>
+    请在浏览器设置中开启「硬件加速 / WebGL」后刷新，或换用支持 WebGL 的浏览器。<br>
+    <span style="opacity:.6;font-size:.85em">${err.message}</span></div></div>`
+  throw err
+}
+
 const game = createGame()
 
 const codex = createCodex()
