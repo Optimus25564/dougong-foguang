@@ -5,18 +5,23 @@ export function easeOutCubic(t) {
   return 1 - Math.pow(1 - t, 3)
 }
 
-export const SETTLE_MS = 600
+export const SETTLE_MS = 260
 export const DISMISS_MS = 400
 
-// 归位缓落：部件从松手处的落点缓缓滑入最终装配位，转动瞬时到位、位移渐进
-export function settleTween(mesh, fromPos, toPos, durationMs) {
+// 归位缓落：部件从松手处的落点快速滑入最终装配位（转动瞬时到位、位移渐进），
+// 到位一刻触发 onDone —— 用来播放卡扣声，让"咔"正好落在部件坐实的瞬间。
+export function settleTween(mesh, fromPos, toPos, durationMs, onDone) {
   let elapsed = 0
   return function tick(dt) {
     elapsed += dt * 1000
     const t = Math.min(1, elapsed / durationMs)
     const e = easeOutCubic(t)
     mesh.position.set(...lerpVec(fromPos, toPos, e))
-    return t >= 1
+    if (t >= 1) {
+      if (onDone) onDone()
+      return true
+    }
+    return false
   }
 }
 

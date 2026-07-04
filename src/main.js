@@ -8,6 +8,7 @@ import { validateSnap } from './interaction/snapValidator.js'
 import { createDragController } from './interaction/dragPlace.js'
 import { focusOn } from './teach/cameraFocus.js'
 import { settleTween, dismissTween, SETTLE_MS, DISMISS_MS } from './teach/motion.js'
+import { playSnap, primeAudio } from './audio/snap.js'
 import { applyHighlight, clearHighlight } from './teach/highlight.js'
 import { showAnnotation } from './teach/annotation.js'
 import { createForceArrows } from './teach/forceAnim.js'
@@ -41,6 +42,8 @@ const drag = createDragController(S.renderer, S.camera, { onDrop })
 const tray = createTray({ onPick(partId) {
   if (dragMesh) return
   dragMesh = buildPartMesh(partId)
+  const tp = placementFor(partId)
+  if (tp) dragMesh.rotation.z = tp.rotZ || 0 // 部件出场即按目标角度摆好，与卯口一致，无需手动调角
   S.scene.add(dragMesh)
   drag.beginDrag(partId, dragMesh)
 } })
@@ -76,6 +79,7 @@ function onDrop(partId, pos) {
     return
   }
   dragMesh = null
+  primeAudio() // 在松手这个用户手势里唤醒音频，稍后卡扣声才能顺利播放
   commitPlace(partId, res.target, pos)
 }
 
@@ -96,7 +100,7 @@ function commitPlace(partId, target, dropPos) {
   S.addPart(mesh, target) // 旋转瞬时到位；位置随后由 settleTween 接管，从落点缓缓滑入
   const startPos = dropPos || target.pos
   mesh.position.set(...startPos)
-  tweens.push(settleTween(mesh, startPos, target.pos, SETTLE_MS))
+  tweens.push(settleTween(mesh, startPos, target.pos, SETTLE_MS, playSnap)) // 坐实一刻响卡扣声
   const part = getPart(partId)
 
   // 教学：聚焦 + 高亮 + 讲解卡
@@ -118,11 +122,24 @@ function finish() {
   // 整朵受力总览：让所有受力箭头持续演示
 }
 
+// 虚影"呼吸"以便定位；正在拖动的部件对准卯口时染绿自发光，"对齐了"一目了然
+function updateGhostCue(now) {
+  if (ghost) {
+    const t = (now % 1500) / 1500
+    ghost.material.opacity = 0.07 + 0.09 * (0.5 - 0.5 * Math.cos(t * Math.PI * 2))
+  }
+  const step = game.currentStep()
+  if (dragMesh && dragMesh.material.emissive) {
+    const aligned = step && validateSnap(step.partId, dragMesh.position.toArray()).ok
+    dragMesh.material.emissive.setHex(aligned ? 0x2e7d32 : 0x000000)
+  }
+}
+
 // 驱动补间与受力动画
 let last = performance.now()
 ;(function animate(now) {
   const dt = (now - last) / 1000; last = now
-  drag.follow(dt) // 拖拽悬停：阻尼跟随鼠标瞄准点，而非瞬移
+  updateGhostCue(now)
   for (let i = tweens.length - 1; i >= 0; i--) if (tweens[i](dt)) tweens.splice(i, 1)
   for (const rig of forceRigs) rig.update(dt)
   requestAnimationFrame(animate)

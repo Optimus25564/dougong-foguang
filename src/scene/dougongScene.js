@@ -5,8 +5,10 @@ export function createScene(container) {
   const scene = new THREE.Scene()
   scene.background = new THREE.Color(0x1a1512)
 
+  // 装配发生在 z=0 这一个平面内，故默认用近正视（略带俯角）取景：
+  // 屏幕坐标几乎直接对应装配位，拖拽落点直观、深度不再暧昧。可自由环绕欣赏。
   const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100)
-  camera.position.set(2.2, 1.6, 2.6)
+  camera.position.set(0.45, 0.6, 3.6)
 
   const renderer = new THREE.WebGLRenderer({ antialias: true })
   renderer.setSize(container.clientWidth, container.clientHeight)
@@ -15,7 +17,7 @@ export function createScene(container) {
   container.appendChild(renderer.domElement)
 
   const controls = new OrbitControls(camera, renderer.domElement)
-  controls.target.set(0, 0.6, 0)
+  controls.target.set(0.45, 0.45, 0) // 对准整朵斗栱的大致中心（自栌斗向右上层叠展开）
   controls.enableDamping = true
 
   // 光照：暖色主光 + 冷补光 + 环境
@@ -39,7 +41,7 @@ export function createScene(container) {
   }
   function addPart(mesh, placement) { applyPlacement(mesh, placement); scene.add(mesh) }
   function addGhost(mesh, placement) {
-    mesh.material = new THREE.MeshBasicMaterial({ color: 0x66ccff, transparent: true, opacity: 0.22, wireframe: false })
+    mesh.material = new THREE.MeshBasicMaterial({ color: 0x66ccff, transparent: true, opacity: 0.10, depthWrite: false, wireframe: false })
     applyPlacement(mesh, placement)
     scene.add(mesh)
     return mesh
