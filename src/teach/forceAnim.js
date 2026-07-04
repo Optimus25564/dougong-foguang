@@ -9,6 +9,8 @@ export function leverBalance(t) {
 // 可视：在昂尖（外挑，红）与昂尾（内压，蓝）加受力箭头
 export function createForceArrows(scene, partMesh) {
   const group = new THREE.Group()
+  const baseY = partMesh.position.y // 锚定到部件高度
+  group.position.copy(partMesh.position)
   const tip = new THREE.ArrowHelper(new THREE.Vector3(0, -1, 0), new THREE.Vector3(0.6, 0.1, 0), 0.3, 0xff5533)
   const tail = new THREE.ArrowHelper(new THREE.Vector3(0, -1, 0), new THREE.Vector3(-0.4, 0.2, 0), 0.25, 0x3388ff)
   group.add(tip, tail)
@@ -19,7 +21,7 @@ export function createForceArrows(scene, partMesh) {
     update(dt) {
       t = (t + dt * 0.5) % 1
       const b = leverBalance(t)
-      group.position.y = -b.tipDrop
+      group.position.y = baseY - b.tipDrop // 脉动相对于部件高度
     },
   }
 }

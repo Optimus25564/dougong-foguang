@@ -8,7 +8,8 @@ describe('下昂杠杆平衡', () => {
     expect(r.tailRise).toBe(0)
   })
   it('随 t 增大，昂尖下沉、昂尾上翘，方向相反', () => {
-    const r = leverBalance(1)
+    // 振幅在 t=0.5 峰值（0→1→0 脉动）
+    const r = leverBalance(0.5)
     expect(r.tipDrop).toBeGreaterThan(0)
     expect(r.tailRise).toBeGreaterThan(0)
     // 杠杆：尖下沉与尾上翘同步（绕支点）
