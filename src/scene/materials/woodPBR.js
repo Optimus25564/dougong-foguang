@@ -1,10 +1,12 @@
 import * as THREE from 'three'
 
+// 木料色调：warm 为唐代原木暖褐，aged 为更深旧木
 const TONES = {
   warm: { base: 0x8a5a34, grain: 0x6b4423 },
   aged: { base: 0x5c3a22, grain: 0x3e2716 },
 }
 
+// 程序化生成木纹 canvas 贴图：底色填充后，多道随机木纹线构成纹理
 function makeGrainTexture(tone) {
   const size = 256
   const c = document.createElement('canvas')
@@ -29,6 +31,7 @@ function makeGrainTexture(tone) {
   return tex
 }
 
+// 返回带程序化木纹的 PBR 木料材质
 export function createWoodMaterial({ tone = 'warm' } = {}) {
   const t = TONES[tone] ?? TONES.warm
   return new THREE.MeshStandardMaterial({
