@@ -96,5 +96,7 @@ export function createScene(container) {
     renderer.setSize(container.clientWidth, container.clientHeight)
   })
 
-  return { scene, camera, renderer, controls, addPart, addGhost, markerTo, hideMarker, start }
+  function setStubVisible(v) { col.visible = v } // 受力·语境模式用完整柱替换柱头短柱
+
+  return { scene, camera, renderer, controls, addPart, addGhost, markerTo, hideMarker, setStubVisible, start }
 }

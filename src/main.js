@@ -6,13 +6,15 @@ import { ASSEMBLY_STEPS } from './content/assemblySteps.js'
 import { createGame } from './engine/gameState.js'
 import { validateSnap } from './interaction/snapValidator.js'
 import { createDragController } from './interaction/dragPlace.js'
-import { focusOn, frameOn } from './teach/cameraFocus.js'
+import { focusOn, frameOn, frameTo } from './teach/cameraFocus.js'
 import { settleTween, dismissTween, SETTLE_MS, DISMISS_MS } from './teach/motion.js'
 import { playSnap, primeAudio } from './audio/snap.js'
 import { applyHighlight, clearHighlight } from './teach/highlight.js'
 import { showAnnotation } from './teach/annotation.js'
 import { createForceArrows } from './teach/forceAnim.js'
 import { createExploder } from './teach/explode.js'
+import { createBuildingContext } from './scene/buildingContext.js'
+import { createForcePathTour } from './teach/forcePathTour.js'
 import { getPart } from './content/parts.js'
 import { createTray } from './ui/tray.js'
 import { createCodex } from './ui/codex.js'
@@ -43,7 +45,12 @@ const hud = createHud({
   onChallenge: () => alert('挑战模式即将上线（MVP 后）'),
   onCodex: () => codex.open(),
   onExplode: toggleExplode,
+  onForce: toggleForce,
 })
+const tour = createForcePathTour({ scene: S.scene }) // 传力链导览（受力·语境模式）
+let context = null       // 一开间建筑框架，首次进入受力模式时懒构建
+let forceOn = false
+let tourCard = null
 let dragMesh = null
 const drag = createDragController(S.renderer, S.camera, { onDrop })
 const tray = createTray({ onPick(partId) {
@@ -148,10 +155,11 @@ function commitPlace(partId, target, dropPos) {
 
 function finish() {
   S.hideMarker()
-  hud.setHint('大功告成！一朵七铺作双杪双下昂已重建。点「拆解图」可把它逐件炸开细看。')
+  hud.setHint('大功告成！一朵七铺作双杪双下昂已重建。点「受力·语境」看它如何撑住屋檐、如何入墙，或「拆解图」逐件炸开。')
   hud.showChallenge()
+  hud.showExplode()
+  hud.showForce()
   codex.open()
-  // 整朵受力总览：让所有受力箭头持续演示
 }
 
 // 用当前已放好的构件（按装配顺序）刷新拆解图数据
@@ -169,12 +177,84 @@ function refreshExploder() {
 
 // 切换拆解图：炸开时收起零件盘/虚影，避免与装配流程打架
 function toggleExplode(on) {
+  if (on && forceOn) { forceOn = false; exitForce() } // 与受力·语境互斥
   exploder.setExploded(on)
   if (on && ghost) { S.scene.remove(ghost); ghost = null }
   if (on) S.hideMarker()
   tray.el.style.display = on ? 'none' : ''
   if (!on) showCurrentStep()
 }
+
+// 简单数值淡入淡出补间，驱动 context 透明度
+function fadeTween(setter, from, to, dur, onDone) {
+  let t = 0
+  return dt => {
+    t = Math.min(1, t + dt / dur)
+    setter(from + (to - from) * t)
+    if (t >= 1) { onDone && onDone(); return true }
+    return false
+  }
+}
+
+// 切换「受力·语境」：把整朵放回一开间框架，启动分步传力导览
+function toggleForce(on) {
+  forceOn = on
+  if (on) {
+    if (exploder.exploded) { exploder.setExploded(false); tray.el.style.display = 'none' } // 互斥
+    enterForce()
+  } else {
+    exitForce()
+  }
+}
+
+function enterForce() {
+  if (ghost) { S.scene.remove(ghost); ghost = null }
+  S.hideMarker()
+  tray.el.style.display = 'none'
+  S.setStubVisible(false)                                  // 短柱换成完整柱
+  for (const rig of forceRigs) rig.group.visible = false  // 收起逐件杠杆箭头，避免与传力链打架
+  if (!context) context = createBuildingContext()
+  S.scene.add(context.group)
+  tweens.push(fadeTween(context.setOpacity, 0, 1, 0.6))
+  // 断面 3/4 视角：既看清出跳（+X），又看清开间与墙（沿 -Z 退向深处）
+  tweens.push(frameTo(S.camera, S.controls, [2.7, 0.95, 3.1], [0.30, 0.36, -0.45], { duration: 1.1 }))
+  tour.start(renderTourCard)
+}
+
+function exitForce() {
+  tour.stop()
+  hideTourCard()
+  for (const rig of forceRigs) rig.group.visible = true
+  if (context) {
+    const ctx = context
+    tweens.push(fadeTween(ctx.setOpacity, 1, 0, 0.4, () => S.scene.remove(ctx.group)))
+  }
+  S.setStubVisible(true)
+  tweens.push(frameOn(S.camera, S.controls, placementFor('huagong-2').pos, { distance: OVERVIEW_DIST })) // 回总览
+}
+
+// 底部居中导览卡：步号 + 名目 + 讲解 + 上/下一步 + 退出
+function renderTourCard(node, i, flags) {
+  if (!tourCard) {
+    tourCard = document.createElement('div')
+    tourCard.className = 'tour-card'
+    document.body.appendChild(tourCard)
+  }
+  const total = tour.nodes.length
+  tourCard.innerHTML = `
+    <div class="tour-step">受力传递 · 第 ${i + 1} / ${total} 步</div>
+    <h3>${node.label}</h3>
+    <p>${node.caption}</p>
+    <div class="tour-nav">
+      <button class="tour-prev"${flags.first ? ' disabled' : ''}>← 上一步</button>
+      <button class="tour-close">退出</button>
+      <button class="tour-next"${flags.last ? ' disabled' : ''}>下一步 →</button>
+    </div>`
+  tourCard.querySelector('.tour-prev').onclick = () => tour.prev()
+  tourCard.querySelector('.tour-next').onclick = () => tour.next()
+  tourCard.querySelector('.tour-close').onclick = () => { hud.setForcePressed(false); toggleForce(false) }
+}
+function hideTourCard() { if (tourCard) { tourCard.remove(); tourCard = null } }
 
 // 虚影"呼吸"以便定位；正在拖动的部件对准卯口时染绿自发光，"对齐了"一目了然
 function updateGhostCue(now) {
@@ -197,6 +277,7 @@ let last = performance.now()
   for (let i = tweens.length - 1; i >= 0; i--) if (tweens[i](dt)) tweens.splice(i, 1)
   for (const rig of forceRigs) rig.update(dt)
   exploder.update(dt)
+  tour.update(dt)
   requestAnimationFrame(animate)
 })(performance.now())
 
@@ -220,6 +301,8 @@ if (new URLSearchParams(location.search).has('demo')) {
     S.camera.position.set(0.6, 0.6, 6.2)
     S.controls.target.set(0.6, 0.6, 0)
     S.controls.update()
+  } else if (view === 'force') {
+    hud.showForce(); hud.setForcePressed(true); toggleForce(true) // 受力·语境自检
   }
 } else {
   showCurrentStep()

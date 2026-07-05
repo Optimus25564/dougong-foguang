@@ -17,6 +17,23 @@ export function focusOn(camera, controls, targetVec3, { duration = 0.8 } = {}) {
   }
 }
 
+// 通用双点相机补间：把相机与视线中心同时缓动到指定的相机位/目标位。
+// 用于「受力·语境」等需要转到特定断面视角的场合。
+export function frameTo(camera, controls, camPos, targetPos, { duration = 1.0 } = {}) {
+  const sp = camera.position.clone()
+  const st = controls.target.clone()
+  const ep = new THREE.Vector3(...camPos)
+  const et = new THREE.Vector3(...targetPos)
+  let t = 0
+  return function tick(dt) {
+    t = Math.min(1, t + dt / duration)
+    const e = 1 - Math.pow(1 - t, 3)
+    camera.position.lerpVectors(sp, ep, e)
+    controls.target.lerpVectors(st, et, e)
+    return t >= 1
+  }
+}
+
 // 取景补间：不仅把视线中心对到落点，还把相机拉近到落点前方固定的 3/4 近景，
 // 让当前该放的这一件（哪怕小、哪怕被挡）稳稳占据画面中心。
 const FRAME_DIR = new THREE.Vector3(0.34, 0.30, 1).normalize() // 固定视向：正面略偏右上
