@@ -14,35 +14,33 @@ export function douDimensions(dims) {
   }
 }
 
-// 斗身自下而上：欹足（底面四角、中开十字卡槽，套其下栱头）、平（斗平，实心）、
-// 耳（顶面四角、中开十字斗口，纳其上栱/昂）。上下都开十字口，故斗与栱上下皆能咬合。
+// 斗身自下而上：欹（底段·实心倒台，底面收分，无槽——斗坐在其下栱/柱之上）、
+// 平（斗平·实心）、耳（顶段·四角方块中开十字斗口，纳其上的栱/昂）。
+// 关键：只有顶面开十字口；底面是整块实心的欹，斗才敦实如斗、不成四脚板凳。
 export function createDouGeometry(dims) {
   const d = douDimensions(dims)
   const geos = []
-  const earSide = (d.width - d.kou) / 2      // 角块在 X/Z 方向的边长
-  const off = d.kou / 2 + earSide / 2        // 角块中心到斗轴的距离
 
-  // 欹足：底面四角方块，中留十字卡槽（斗底套住其下的栱头）；足底略内收，留一点欹意
-  const footY = -d.height / 2 + d.xieH / 2
-  for (const sx of [-1, 1]) {
-    for (const sz of [-1, 1]) {
-      const foot = new THREE.BoxGeometry(earSide, d.xieH, earSide)
-      const fp = foot.getAttribute('position')
-      for (let i = 0; i < fp.count; i++) {
-        if (fp.getY(i) < 0) { // 每只足的底面朝斗心方向内收，近欹的收分
-          fp.setX(i, fp.getX(i) * 0.7)
-          fp.setZ(i, fp.getZ(i) * 0.7)
-        }
-      }
-      foot.translate(sx * off, footY, sz * off)
-      geos.push(foot)
+  // 欹：底段实心倒台，底面朝内收分（斗欹的外张之势），整块无槽
+  const xie = new THREE.BoxGeometry(d.width, d.xieH, d.depth)
+  const xp = xie.getAttribute('position')
+  for (let i = 0; i < xp.count; i++) {
+    if (xp.getY(i) < 0) { // 底面四边内收，成倒梯形（下小上大）
+      xp.setX(i, xp.getX(i) * 0.72)
+      xp.setZ(i, xp.getZ(i) * 0.72)
     }
   }
-  // 平（斗平）：实心，栱底就坐在这一层的顶面上
+  xie.translate(0, -d.height / 2 + d.xieH / 2, 0)
+  geos.push(xie)
+
+  // 平（斗平）：实心，栱/昂就坐在这一层顶面
   const ping = new THREE.BoxGeometry(d.width, d.pingH, d.depth)
   ping.translate(0, -d.height / 2 + d.xieH + d.pingH / 2, 0)
   geos.push(ping)
+
   // 耳：顶面四角方块，中留十字斗口（纳其上的栱/昂，被四耳夹住）
+  const earSide = (d.width - d.kou) / 2      // 角块在 X/Z 方向的边长
+  const off = d.kou / 2 + earSide / 2        // 角块中心到斗轴的距离
   const earY = d.height / 2 - d.earH / 2
   for (const sx of [-1, 1]) {
     for (const sz of [-1, 1]) {
