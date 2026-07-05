@@ -30,6 +30,14 @@ const P1 = pingTop(jhd1Cy, SD_H, SD_EAR)
 const hg2Cy = P1 + ZUCAI / 2                            // 华栱二
 const jhd2Cy = douOn(hg2Cy + ZUCAI / 2, SD_H)
 const P2 = pingTop(jhd2Cy, SD_H, SD_EAR)
+// —— 华栱二跳头的计心层（隔跳偷心：二跳计心）：瓜子栱 → 慢栱 → 罗汉枋 ——
+const gzCy = P2 + DANCAI / 2                            // 瓜子栱坐交互斗二斗平（与下昂在斗口十字相交）
+const gzSdCy = douOn(gzCy + DANCAI / 2, SD_H)          // 瓜子栱端散斗
+const mgCy = pingTop(gzSdCy, SD_H, SD_EAR) + DANCAI / 2 // 慢栱坐瓜子栱端散斗（重栱）
+const mgSdCy = douOn(mgCy + DANCAI / 2, SD_H)          // 慢栱端散斗
+const lhCy = mgSdCy + SD_H / 2 - SEAT + DANCAI / 2     // 罗汉枋坐慢栱端散斗
+const GZ_END = 24                                       // 瓜子栱端散斗进深偏移（分，长 62→半 31）
+const MG_END = 40                                       // 慢栱端散斗进深偏移（分，长 92→半 46）
 const xa1Cy = P2 + ZUCAI / 2                            // 下昂一
 const jhd3Cy = douOn(xa1Cy + ZUCAI / 2 - drop(SLOPE), SD_H)  // 昂一跳头下沉
 const P3 = pingTop(jhd3Cy, SD_H, SD_EAR)
@@ -60,6 +68,13 @@ export const PLACEMENTS = {
   'jiaohudou-1':{ pos: [f(TIAO),    f(jhd1Cy),   0],     rotZ: 0 },
   'huagong-2':  { pos: [f(TIAO),    f(hg2Cy),    0],     rotZ: 0 },
   'jiaohudou-2':{ pos: [f(2 * TIAO),f(jhd2Cy),   0],     rotZ: 0 },
+  guazigong:    { pos: [f(2 * TIAO),f(gzCy),     0],     rotZ: 0, rotY: deg(90) },
+  'sandou-5':   { pos: [f(2 * TIAO),f(gzSdCy),   f(GZ_END)],  rotZ: 0 },
+  'sandou-6':   { pos: [f(2 * TIAO),f(gzSdCy),   f(-GZ_END)], rotZ: 0 },
+  mangong:      { pos: [f(2 * TIAO),f(mgCy),     0],     rotZ: 0, rotY: deg(90) },
+  'sandou-7':   { pos: [f(2 * TIAO),f(mgSdCy),   f(MG_END)],  rotZ: 0 },
+  'sandou-8':   { pos: [f(2 * TIAO),f(mgSdCy),   f(-MG_END)], rotZ: 0 },
+  luohanfang:   { pos: [f(2 * TIAO),f(lhCy),     0],     rotZ: 0, rotY: deg(90) },
   'xiaang-1':   { pos: [f(2 * TIAO),f(xa1Cy),    0],     rotZ: deg(-SLOPE) },
   'jiaohudou-3':{ pos: [f(3 * TIAO),f(jhd3Cy),   0],     rotZ: 0 },
   'xiaang-2':   { pos: [f(3 * TIAO),f(xa2Cy),    0],     rotZ: deg(-SLOPE) },

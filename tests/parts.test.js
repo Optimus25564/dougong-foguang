@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest'
 import { PARTS, getPart, REQUIRED_FIELDS } from '../src/content/parts.js'
 
 describe('parts 数据表', () => {
-  it('七铺作偷心造共 19 件（泥道两散斗 + 令栱两散斗），层级严格递增、唯一', () => {
-    expect(PARTS).toHaveLength(19)
+  it('七铺作隔跳偷心共 26 件，层级严格递增、唯一', () => {
+    expect(PARTS).toHaveLength(26)
     const layers = PARTS.map(p => p.layer).sort((a, b) => a - b)
     for (let i = 1; i < layers.length; i++) {
       expect(layers[i], `层级须严格递增：${layers[i - 1]} → ${layers[i]}`).toBeGreaterThan(layers[i - 1])
@@ -11,16 +11,32 @@ describe('parts 数据表', () => {
     expect(layers[0]).toBe(0) // 栌斗为基
   })
 
-  it('四散斗分列两处：泥道两散斗承柱头枋、令栱两散斗承替木', () => {
+  it('八散斗分列三处：泥道承柱头枋、瓜子/慢栱承罗汉枋、令栱承替木', () => {
     const san = PARTS.filter(p => p.id.startsWith('sandou'))
-    expect(san).toHaveLength(4)
+    expect(san).toHaveLength(8)
     for (const s of san) expect(s.term).toBe('散斗')
-    // 泥道一列
+    // 泥道一列 → 柱头枋
     for (const id of ['sandou-1', 'sandou-2']) expect(getPart(id).parents).toContain('nidaogong')
     expect(getPart('zhutoufang').parents).toEqual(['sandou-1', 'sandou-2'])
-    // 令栱一列
+    // 第二跳计心：瓜子栱端散斗 → 慢栱；慢栱端散斗 → 罗汉枋
+    for (const id of ['sandou-5', 'sandou-6']) expect(getPart(id).parents).toContain('guazigong')
+    expect(getPart('mangong').parents).toEqual(['sandou-5', 'sandou-6'])
+    for (const id of ['sandou-7', 'sandou-8']) expect(getPart(id).parents).toContain('mangong')
+    expect(getPart('luohanfang').parents).toEqual(['sandou-7', 'sandou-8'])
+    // 令栱一列 → 替木
     for (const id of ['sandou-3', 'sandou-4']) expect(getPart(id).parents).toContain('linggong')
     expect(getPart('timu').parents).toEqual(['sandou-3', 'sandou-4'])
+  })
+
+  it('隔跳偷心造：二跳计心施重栱（瓜子栱→慢栱→罗汉枋），一、三跳偷心', () => {
+    // 第二跳跳头（交互斗二）之上施瓜子栱、慢栱、罗汉枋，即计心
+    expect(getPart('guazigong').parents).toEqual(['jiaohudou-2'])
+    expect(getPart('guazigong').term).toBe('瓜子栱')
+    expect(getPart('mangong').term).toBe('慢栱')
+    expect(getPart('luohanfang').term).toBe('罗汉枋')
+    // 一、三跳偷心：华栱一、下昂一跳头只承交互斗，不施横栱
+    expect(getPart('jiaohudou-1').parents).toEqual(['huagong-1'])
+    expect(getPart('jiaohudou-3').parents).toEqual(['xiaang-1'])
   })
 
   it('4 颗交互斗各就其位，坐于所承托构件下方的跳头', () => {
@@ -29,8 +45,8 @@ describe('parts 数据表', () => {
     for (const d of dous) expect(d.term).toBe('交互斗')
   })
 
-  it('偷心造：外跳三个跳头不施横栱，横栱只在泥道一列与令栱', () => {
-    // 泥道栱、柱头枋（泥道一列）+ 令栱（外跳唯一计心）
+  it('横栱分布：泥道一列 + 二跳计心（瓜子/慢栱）+ 令栱，承檐三件齐备', () => {
+    // 泥道栱、柱头枋（泥道一列）+ 二跳计心横栱 + 令栱（四跳计心）
     expect(getPart('nidaogong').term).toBe('泥道栱')
     expect(getPart('zhutoufang').term).toBe('柱头枋')
     expect(getPart('linggong').term).toBe('令栱')

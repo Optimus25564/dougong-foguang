@@ -10,7 +10,7 @@ function geometryFor(part) {
   const id = part.id
   if (id === 'ludou' || id.includes('dou')) return createDouGeometry(part.dims)   // 栌斗 / 交互斗
   if (id.startsWith('xiaang') || id === 'shuatou') return createAngGeometry(part.dims) // 下昂 / 耍头
-  if (id === 'zhutoufang') return createFangGeometry(part.dims)  // 柱头枋
+  if (id === 'zhutoufang' || id === 'luohanfang') return createFangGeometry(part.dims)  // 柱头枋 / 罗汉枋
   if (id === 'timu') return createTimuGeometry(part.dims)        // 替木（顶开鞍口承圆槫）
   if (id === 'liaoyantuan') return createTuanGeometry(part.dims)                   // 橑檐槫
   if (id.includes('gong')) return createGongGeometry(part.dims, part.juansha ?? 4) // 华栱 / 泥道栱 / 令栱
