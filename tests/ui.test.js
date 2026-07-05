@@ -4,13 +4,13 @@ import { createCodex } from '../src/ui/codex.js'
 import { createHud } from '../src/ui/hud.js'
 
 describe('零件盘', () => {
-  it('showPart 显示部件名，点击触发 onPick', () => {
+  it('showPart 显示部件名，按下（pointerdown）触发 onPick', () => {
     const onPick = vi.fn()
     const tray = createTray({ onPick })
     tray.showPart('ludou')
     expect(tray.el.textContent).toContain('栌斗')
-    tray.el.querySelector('[data-part="ludou"]').click()
-    expect(onPick).toHaveBeenCalledWith('ludou')
+    tray.el.querySelector('[data-part="ludou"]').dispatchEvent(new Event('pointerdown'))
+    expect(onPick).toHaveBeenCalledWith('ludou', expect.anything()) // (partId, 事件)
   })
 })
 

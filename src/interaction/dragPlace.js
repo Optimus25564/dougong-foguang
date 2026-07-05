@@ -12,9 +12,12 @@ export function screenToGroundPoint(camera, ndc, planeZ = 0) {
   return [hit.x, hit.y, hit.z]
 }
 
-export function createDragController(renderer, camera, { onDrop }) {
+// 按住拖拽（鼠标 / 触屏统一走 Pointer Events）：从零件盘按下即抓起、跟手移动、松手放下。
+// 拖动期间关掉 OrbitControls，避免同一根手指既拖件又转镜头（触屏上二者本会打架）。
+export function createDragController(renderer, camera, controls, { onDrop }) {
   const el = renderer.domElement
-  let dragging = null // { partId, mesh }
+  let dragging = null // { partId, mesh, planeZ }
+
   function ndc(e) {
     const r = el.getBoundingClientRect()
     return { x: ((e.clientX - r.left) / r.width) * 2 - 1, y: -((e.clientY - r.top) / r.height) * 2 + 1 }
@@ -24,19 +27,36 @@ export function createDragController(renderer, camera, { onDrop }) {
     const p = screenToGroundPoint(camera, ndc(e), dragging.planeZ)
     if (p) dragging.mesh.position.set(...p) // 直接跟手，不做悬停阻尼
   }
+  function teardown() {
+    window.removeEventListener('pointermove', move)
+    window.removeEventListener('pointerup', up)
+    window.removeEventListener('pointercancel', cancel)
+    if (controls) controls.enabled = true // 恢复镜头旋转
+  }
   function up(e) {
     if (!dragging) return
-    const draggingPartId = dragging.partId
-    const p = screenToGroundPoint(camera, ndc(e), dragging.planeZ)
-    window.removeEventListener('pointermove', move)
+    const { partId, planeZ } = dragging
+    const p = screenToGroundPoint(camera, ndc(e), planeZ)
     dragging = null
-    onDrop(draggingPartId, p)
+    teardown()
+    onDrop(partId, p)
   }
+  function cancel() { // 触摸被系统打断（来电、手势返回等）：按未对准处理，避免卡住
+    if (!dragging) return
+    const { partId } = dragging
+    dragging = null
+    teardown()
+    onDrop(partId, null)
+  }
+
   return {
-    beginDrag(partId, mesh, planeZ = 0) {
+    beginDrag(partId, mesh, planeZ = 0, startEvent = null) {
       dragging = { partId, mesh, planeZ }
+      if (controls) controls.enabled = false
+      if (startEvent) move(startEvent) // 立刻定位到按下点，手指/光标下即出现该件
       window.addEventListener('pointermove', move)
-      window.addEventListener('pointerup', up, { once: true })
+      window.addEventListener('pointerup', up)
+      window.addEventListener('pointercancel', cancel)
     },
   }
 }
