@@ -10,7 +10,7 @@ import { focusOn, frameOn, frameTo } from './teach/cameraFocus.js'
 import { settleTween, dismissTween, SETTLE_MS, DISMISS_MS } from './teach/motion.js'
 import { playSnap, primeAudio } from './audio/snap.js'
 import { applyHighlight, clearHighlight } from './teach/highlight.js'
-import { showAnnotation } from './teach/annotation.js'
+import { showAnnotation, hideAnnotation } from './teach/annotation.js'
 import { createForceArrows } from './teach/forceAnim.js'
 import { createExploder } from './teach/explode.js'
 import { createBuildingContext } from './scene/buildingContext.js'
@@ -55,6 +55,7 @@ let dragMesh = null
 const drag = createDragController(S.renderer, S.camera, S.controls, { onDrop })
 const tray = createTray({ onPick(partId, e) {
   if (dragMesh || exploder.exploded || forceOn) return
+  hideAnnotation() // 抓起下一件即收起上一件的讲解卡，手机上不挡落点
   dragMesh = buildPartMesh(partId)
   const tp = placementFor(partId)
   if (tp) { // 部件出场即按目标角度摆好，与卯口一致，无需手动调角
@@ -314,6 +315,8 @@ if (new URLSearchParams(location.search).has('demo')) {
   } else if (view === 'codex') {
     for (const s of ASSEMBLY_STEPS) codex.unlock(s.partId) // 全解锁，缩略图上色
     codex.open()
+  } else if (view === 'anno') {
+    showAnnotation('ludou') // 自检讲解卡布局（手机底部抽屉 + 关闭钮）
   }
 } else {
   showCurrentStep()

@@ -9,12 +9,14 @@ export function showAnnotation(partId) {
   el = document.createElement('div')
   el.className = 'annotation-card'
   el.innerHTML = `
+    <button class="anno-close" aria-label="关闭讲解">×</button>
     <h2>${p.name} <span class="pinyin">${p.pinyin}</span></h2>
     <div class="term">营造法式术语：${p.term}</div>
     <p class="role"><b>作用：</b>${p.role}</p>
     <p class="desc">${p.desc}</p>
     <p class="trivia">💡 ${p.trivia}</p>
   `
+  el.querySelector('.anno-close').addEventListener('click', hideAnnotation) // 手机上可收起，免得挡住落点
   document.body.appendChild(el)
   return el
 }
