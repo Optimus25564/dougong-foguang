@@ -301,6 +301,10 @@ if (new URLSearchParams(location.search).has('demo')) {
     S.camera.position.set(0.6, 0.6, 6.2)
     S.controls.target.set(0.6, 0.6, 0)
     S.controls.update()
+  } else if (view === 'top') {
+    S.camera.position.set(1.15, 0.95, 1.9)
+    S.controls.target.set(0.78, 0.72, 0.02)
+    S.controls.update()
   } else if (view === 'force') {
     hud.showForce(); hud.setForcePressed(true); toggleForce(true) // 受力·语境自检
   }

@@ -4,13 +4,14 @@ import { createWoodMaterial } from './materials/woodPBR.js'
 import { createDouGeometry } from './geometry/dou.js'
 import { createGongGeometry } from './geometry/gong.js'
 import { createAngGeometry } from './geometry/ang.js'
-import { createFangGeometry, createTuanGeometry } from './geometry/beam.js'
+import { createFangGeometry, createTimuGeometry, createTuanGeometry } from './geometry/beam.js'
 
 function geometryFor(part) {
   const id = part.id
   if (id === 'ludou' || id.includes('dou')) return createDouGeometry(part.dims)   // 栌斗 / 交互斗
   if (id.startsWith('xiaang') || id === 'shuatou') return createAngGeometry(part.dims) // 下昂 / 耍头
-  if (id === 'zhutoufang' || id === 'timu') return createFangGeometry(part.dims)  // 柱头枋 / 替木
+  if (id === 'zhutoufang') return createFangGeometry(part.dims)  // 柱头枋
+  if (id === 'timu') return createTimuGeometry(part.dims)        // 替木（顶开鞍口承圆槫）
   if (id === 'liaoyantuan') return createTuanGeometry(part.dims)                   // 橑檐槫
   if (id.includes('gong')) return createGongGeometry(part.dims, part.juansha ?? 4) // 华栱 / 泥道栱 / 令栱
   throw new Error(`无法为部件生成几何：${id}`)

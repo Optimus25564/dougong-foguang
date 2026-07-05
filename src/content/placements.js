@@ -38,8 +38,11 @@ const jhd4Cy = douOn(xa2Cy + ZUCAI / 2 - drop(SLOPE), SD_H)  // 昂二跳头下�
 const P4 = pingTop(jhd4Cy, SD_H, SD_EAR)
 const shCy = P4 + ZUCAI / 2                             // 耍头
 const lgCy = shCy + ZUCAI / 2 - drop(SLOPE_SH) + DANCAI / 2  // 令栱坐耍头跳头（微沉）
-const tmCy = lgCy + DANCAI / 2 + TIMU_G / 2            // 替木坐令栱顶
-const ltCy = tmCy + TIMU_G / 2 + TUAN_R                // 橑檐槫坐替木顶
+const lsCy = douOn(lgCy + DANCAI / 2, SD_H)           // 令散斗坐令栱两端栱头
+const TUAN_SINK = 3                                     // 撩檐槫沉入替木鞍口（分）
+const tmCy = lsCy + SD_H / 2 - SEAT + TIMU_G / 2      // 替木坐两令散斗顶
+const ltCy = tmCy + TIMU_G / 2 + TUAN_R - TUAN_SINK   // 橑檐槫嵌入替木鞍口
+const LING_END = 26                                    // 令散斗距令栱心的进深偏移（分）
 
 // —— 泥道列：栌斗 → 泥道栱 → 散斗 → 柱头枋 ——
 const ndCy = P0 + DANCAI / 2                            // 泥道栱与华栱一同坐栌斗斗平
@@ -63,6 +66,8 @@ export const PLACEMENTS = {
   'jiaohudou-4':{ pos: [f(4 * TIAO),f(jhd4Cy),   0],     rotZ: 0 },
   shuatou:      { pos: [f(4 * TIAO),f(shCy),     0],     rotZ: deg(-SLOPE_SH) },
   linggong:     { pos: [f(4 * TIAO),f(lgCy),     f(2)],  rotZ: 0, rotY: deg(90) },
+  'sandou-3':   { pos: [f(4 * TIAO),f(lsCy),     f(2 + LING_END)], rotZ: 0 },
+  'sandou-4':   { pos: [f(4 * TIAO),f(lsCy),     f(2 - LING_END)], rotZ: 0 },
   timu:         { pos: [f(4 * TIAO),f(tmCy),     f(2)],  rotZ: 0, rotY: deg(90) },
   liaoyantuan:  { pos: [f(4 * TIAO),f(ltCy),     f(2)],  rotZ: 0, rotY: deg(90) },
 }
