@@ -8,9 +8,9 @@ describe('拼装顺序', () => {
     ASSEMBLY_STEPS.forEach((s, i) => expect(s.index).toBe(i))
   })
 
-  it('顺序即 layer 升序：第一件是栌斗，最后是令栱', () => {
+  it('顺序即 layer 升序：第一件是栌斗，最后是橑檐槫', () => {
     expect(ASSEMBLY_STEPS[0].partId).toBe('ludou')
-    expect(ASSEMBLY_STEPS.at(-1).partId).toBe('linggong')
+    expect(ASSEMBLY_STEPS.at(-1).partId).toBe('liaoyantuan')
   })
 
   it('每步的父件都排在它之前', () => {

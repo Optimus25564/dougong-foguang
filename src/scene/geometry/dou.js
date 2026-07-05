@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import { FEN_TO_M } from '../../constants.js'
 
 export function douDimensions(dims) {
-  const { fang, height, ear, ping, xie } = dims
+  const { fang, height, ear, ping, xie, kouWidth = 10 } = dims
   return {
     width: fang * FEN_TO_M,
     depth: fang * FEN_TO_M,
@@ -10,34 +10,46 @@ export function douDimensions(dims) {
     earH: ear * FEN_TO_M,
     pingH: ping * FEN_TO_M,
     xieH: xie * FEN_TO_M,
+    kou: kouWidth * FEN_TO_M,   // 斗口宽——十字凹槽的宽度，正好纳一材厚的栱/昂
   }
 }
 
-// 斗身自下而上：欹（下大上小内收）、平（直）、耳（顶部两侧凸起简化为直块）
+// 斗身自下而上：欹足（底面四角、中开十字卡槽，套其下栱头）、平（斗平，实心）、
+// 耳（顶面四角、中开十字斗口，纳其上栱/昂）。上下都开十字口，故斗与栱上下皆能咬合。
 export function createDouGeometry(dims) {
   const d = douDimensions(dims)
   const geos = []
-  // 欹：底面略小、顶面满宽的倒台（用缩放的 box 近似 → 用 BufferGeometry 顶点）
-  const xie = new THREE.BoxGeometry(d.width, d.xieH, d.depth)
-  const posAttr = xie.getAttribute('position')
-  for (let i = 0; i < posAttr.count; i++) {
-    if (posAttr.getY(i) < 0) { // 底面内收 20%
-      posAttr.setX(i, posAttr.getX(i) * 0.8)
-      posAttr.setZ(i, posAttr.getZ(i) * 0.8)
+  const earSide = (d.width - d.kou) / 2      // 角块在 X/Z 方向的边长
+  const off = d.kou / 2 + earSide / 2        // 角块中心到斗轴的距离
+
+  // 欹足：底面四角方块，中留十字卡槽（斗底套住其下的栱头）；足底略内收，留一点欹意
+  const footY = -d.height / 2 + d.xieH / 2
+  for (const sx of [-1, 1]) {
+    for (const sz of [-1, 1]) {
+      const foot = new THREE.BoxGeometry(earSide, d.xieH, earSide)
+      const fp = foot.getAttribute('position')
+      for (let i = 0; i < fp.count; i++) {
+        if (fp.getY(i) < 0) { // 每只足的底面朝斗心方向内收，近欹的收分
+          fp.setX(i, fp.getX(i) * 0.7)
+          fp.setZ(i, fp.getZ(i) * 0.7)
+        }
+      }
+      foot.translate(sx * off, footY, sz * off)
+      geos.push(foot)
     }
   }
-  xie.translate(0, -d.height / 2 + d.xieH / 2, 0)
-  geos.push(xie)
-  // 平
+  // 平（斗平）：实心，栱底就坐在这一层的顶面上
   const ping = new THREE.BoxGeometry(d.width, d.pingH, d.depth)
   ping.translate(0, -d.height / 2 + d.xieH + d.pingH / 2, 0)
   geos.push(ping)
-  // 耳（含十字口：中间开槽，用两侧两块表示）
-  const earGap = d.width * 0.25
+  // 耳：顶面四角方块，中留十字斗口（纳其上的栱/昂，被四耳夹住）
+  const earY = d.height / 2 - d.earH / 2
   for (const sx of [-1, 1]) {
-    const ear = new THREE.BoxGeometry((d.width - earGap) / 2, d.earH, d.depth)
-    ear.translate(sx * (earGap / 2 + (d.width - earGap) / 4), d.height / 2 - d.earH / 2, 0)
-    geos.push(ear)
+    for (const sz of [-1, 1]) {
+      const ear = new THREE.BoxGeometry(earSide, d.earH, earSide)
+      ear.translate(sx * off, earY, sz * off)
+      geos.push(ear)
+    }
   }
   return mergeGeometries(geos)
 }

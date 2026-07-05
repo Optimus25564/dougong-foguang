@@ -16,3 +16,21 @@ export function focusOn(camera, controls, targetVec3, { duration = 0.8 } = {}) {
     return t >= 1
   }
 }
+
+// 取景补间：不仅把视线中心对到落点，还把相机拉近到落点前方固定的 3/4 近景，
+// 让当前该放的这一件（哪怕小、哪怕被挡）稳稳占据画面中心。
+const FRAME_DIR = new THREE.Vector3(0.34, 0.30, 1).normalize() // 固定视向：正面略偏右上
+export function frameOn(camera, controls, targetVec3, { duration = 0.9, distance = 1.25 } = {}) {
+  const startTarget = controls.target.clone()
+  const startPos = camera.position.clone()
+  const end = new THREE.Vector3(...targetVec3)
+  const endPos = end.clone().addScaledVector(FRAME_DIR, distance)
+  let t = 0
+  return function tick(dt) {
+    t = Math.min(1, t + dt / duration)
+    const e = 1 - Math.pow(1 - t, 3) // easeOutCubic
+    controls.target.lerpVectors(startTarget, end, e)
+    camera.position.lerpVectors(startPos, endPos, e)
+    return t >= 1
+  }
+}

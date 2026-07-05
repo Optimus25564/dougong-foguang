@@ -16,6 +16,23 @@ describe('斗几何', () => {
     expect(g.type).toBe('BufferGeometry')
     expect(g.getAttribute('position').count).toBeGreaterThan(0)
   })
+  it('顶面开十字口：耳在四角、斗口中线无耳（可纳栱咬合）', () => {
+    const dims = { fang: 32, height: 20, ear: 8, ping: 4, xie: 8, kouWidth: 10 }
+    const g = createDouGeometry(dims)
+    const p = g.getAttribute('position')
+    const topY = (20 / 2) * FEN_TO_M
+    const halfKou = (10 / 2) * FEN_TO_M
+    let cornerEarVerts = 0
+    let centerTopVerts = 0
+    for (let i = 0; i < p.count; i++) {
+      const x = p.getX(i), y = p.getY(i), z = p.getZ(i)
+      if (y < topY - 1e-6) continue                 // 只看顶面耳层
+      if (Math.abs(x) < halfKou - 1e-4 && Math.abs(z) < halfKou - 1e-4) centerTopVerts++ // 十字口中心
+      if (Math.abs(x) > halfKou + 1e-4 && Math.abs(z) > halfKou + 1e-4) cornerEarVerts++  // 四角
+    }
+    expect(cornerEarVerts).toBeGreaterThan(0)   // 四角有耳
+    expect(centerTopVerts).toBe(0)              // 斗口中线（十字交点）无实体——正是纳栱的槽
+  })
 })
 
 describe('栱几何', () => {
@@ -27,6 +44,13 @@ describe('栱几何', () => {
   it('createGongGeometry 返回非空几何', () => {
     const g = createGongGeometry({ length: 72, caiGuang: 21, houDou: 10 }, 4)
     expect(g.getAttribute('position').count).toBeGreaterThan(0)
+  })
+  it('带搭接刻口(lap)的栱几何比无刻口的多出顶点——刻口确实开出来了', () => {
+    const plain = createGongGeometry({ length: 72, caiGuang: 21, houDou: 10 }, 4)
+    const lapped = createGongGeometry(
+      { length: 72, caiGuang: 21, houDou: 10, lap: { side: 'top', width: 10, depth: 10 } }, 4,
+    )
+    expect(lapped.getAttribute('position').count).toBeGreaterThan(plain.getAttribute('position').count)
   })
 })
 

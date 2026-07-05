@@ -10,13 +10,23 @@ export function angDimensions(dims) {
   }
 }
 
-// 下昂：一根长木，昂尖端斜切（昂嘴），整体待安装时再倾斜
+// 下昂/耍头：一根长木，昂尖端斜切（昂嘴），整体待安装时再倾斜。
+// 可选 dims.lap：在底面开斗口刻口 { side:'bottom', width, depth, at }（分），使其明确骑坐在交互斗上。
 export function createAngGeometry(dims) {
   const d = angDimensions(dims)
   // 侧形：长方体，前端（+X）上方斜切出昂嘴
   const beakLen = d.guang * 1.6
+  const lap = dims.lap
+    ? { side: dims.lap.side, w: dims.lap.width * FEN_TO_M, dep: dims.lap.depth * FEN_TO_M, cx: d.length / 2 + (dims.lap.at ?? 0) * FEN_TO_M }
+    : null
   const shape = new THREE.Shape()
   shape.moveTo(0, 0)
+  if (lap && lap.side === 'bottom') {        // 底面中段开口（向上刻入）
+    shape.lineTo(lap.cx - lap.w / 2, 0)
+    shape.lineTo(lap.cx - lap.w / 2, lap.dep)
+    shape.lineTo(lap.cx + lap.w / 2, lap.dep)
+    shape.lineTo(lap.cx + lap.w / 2, 0)
+  }
   shape.lineTo(d.length - beakLen, 0)
   shape.lineTo(d.length, -d.guang * 0.15)   // 昂尖下探
   shape.lineTo(d.length - beakLen, d.guang) // 斜切上棱

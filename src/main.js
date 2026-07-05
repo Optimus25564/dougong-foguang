@@ -1,17 +1,18 @@
 import './ui/styles.css'
 import { createScene } from './scene/dougongScene.js'
-import { buildPartMesh, buildDouMesh } from './scene/partFactory.js'
-import { placementFor, connectorsOn } from './content/placements.js'
+import { buildPartMesh } from './scene/partFactory.js'
+import { placementFor } from './content/placements.js'
 import { ASSEMBLY_STEPS } from './content/assemblySteps.js'
 import { createGame } from './engine/gameState.js'
 import { validateSnap } from './interaction/snapValidator.js'
 import { createDragController } from './interaction/dragPlace.js'
-import { focusOn } from './teach/cameraFocus.js'
+import { focusOn, frameOn } from './teach/cameraFocus.js'
 import { settleTween, dismissTween, SETTLE_MS, DISMISS_MS } from './teach/motion.js'
 import { playSnap, primeAudio } from './audio/snap.js'
 import { applyHighlight, clearHighlight } from './teach/highlight.js'
 import { showAnnotation } from './teach/annotation.js'
 import { createForceArrows } from './teach/forceAnim.js'
+import { createExploder } from './teach/explode.js'
 import { getPart } from './content/parts.js'
 import { createTray } from './ui/tray.js'
 import { createCodex } from './ui/codex.js'
@@ -36,21 +37,32 @@ try {
 const game = createGame()
 
 const codex = createCodex()
-const hud = createHud({ onChallenge: () => alert('挑战模式即将上线（MVP 后）'), onCodex: () => codex.open() })
+const exploder = createExploder({ camera: S.camera, renderer: S.renderer })
+const placedMeshes = new Map() // partId -> mesh，供拆解图整体调度
+const hud = createHud({
+  onChallenge: () => alert('挑战模式即将上线（MVP 后）'),
+  onCodex: () => codex.open(),
+  onExplode: toggleExplode,
+})
 let dragMesh = null
 const drag = createDragController(S.renderer, S.camera, { onDrop })
 const tray = createTray({ onPick(partId) {
-  if (dragMesh) return
+  if (dragMesh || exploder.exploded) return
   dragMesh = buildPartMesh(partId)
   const tp = placementFor(partId)
-  if (tp) dragMesh.rotation.z = tp.rotZ || 0 // 部件出场即按目标角度摆好，与卯口一致，无需手动调角
+  if (tp) { // 部件出场即按目标角度摆好，与卯口一致，无需手动调角
+    dragMesh.rotation.y = tp.rotY || 0
+    dragMesh.rotation.z = tp.rotZ || 0
+  }
   S.scene.add(dragMesh)
-  drag.beginDrag(partId, dragMesh)
+  drag.beginDrag(partId, dragMesh, tp ? tp.pos[2] : 0) // 在目标所在深度平面拖动，离面件也能对上
 } })
 document.body.append(hud.el, tray.el, codex.el)
 
 let ghost = null
 let lastHighlighted = null
+let camFramedOnce = false
+const OVERVIEW_DIST = 3.6 // 大件的总览取景距离（米）
 const tweens = []
 const forceRigs = []
 
@@ -61,11 +73,25 @@ function showCurrentStep() {
   hud.setHint(step.hint)
   tray.showPart(step.partId)
   if (ghost) S.scene.remove(ghost)
-  ghost = S.addGhost(buildPartMesh(step.partId), placementFor(step.partId))
+  const tp = placementFor(step.partId)
+  ghost = S.addGhost(buildPartMesh(step.partId), tp)
+  S.markerTo(tp.pos) // 置顶下指箭头指到落点，避免小件/被遮挡时找不到虚影
+  // 镜头：只对小件（散斗/交互斗）拉近细看；大件用总览距离（拉近看过小件后再退回来）。
+  // 首件（栌斗）不动镜头，保留初始总览——满足"一开始不需要拉近"。
+  const dist = step.partId.startsWith('sandou') ? 0.72
+    : step.partId.startsWith('jiaohudou') ? 1.05
+    : OVERVIEW_DIST
+  if (camFramedOnce || dist < OVERVIEW_DIST) {
+    tweens.push(frameOn(S.camera, S.controls, tp.pos, { distance: dist }))
+  } else {
+    tweens.push(focusOn(S.camera, S.controls, tp.pos, { duration: 0.8 })) // 首个大件只回中不挪镜头
+  }
+  camFramedOnce = true
 }
 
 // 拖拽落点校验：松手时按吸附结果决定卡扣或回弹
 function onDrop(partId, pos) {
+  if (exploder.exploded) { dismiss(); return } // 拆解态不接受装配
   if (!pos) {
     dismiss()
     hud.setHint('再靠近目标虚影一点，对准了会自动卡扣。')
@@ -78,7 +104,9 @@ function onDrop(partId, pos) {
     hud.setHint('再靠近目标虚影一点，对准了会自动卡扣。')
     return
   }
+  const spent = dragMesh
   dragMesh = null
+  if (spent) S.scene.remove(spent) // 关键：移除被拖动的那件（带对齐绿），否则它作为绿色残影留在场景里
   primeAudio() // 在松手这个用户手势里唤醒音频，稍后卡扣声才能顺利播放
   commitPlace(partId, res.target, pos)
 }
@@ -103,8 +131,7 @@ function commitPlace(partId, target, dropPos) {
   tweens.push(settleTween(mesh, startPos, target.pos, SETTLE_MS, playSnap)) // 坐实一刻响卡扣声
   const part = getPart(partId)
 
-  // 教学：聚焦 + 高亮 + 讲解卡
-  tweens.push(focusOn(S.camera, S.controls, target.pos, { duration: 0.8 }))
+  // 教学：高亮 + 讲解卡（镜头交由下一步 showCurrentStep 的 frameOn 统一调度，避免两个补间抢 target）
   if (lastHighlighted) clearHighlight(lastHighlighted)
   applyHighlight(mesh)
   lastHighlighted = mesh
@@ -112,24 +139,48 @@ function commitPlace(partId, target, dropPos) {
   codex.unlock(partId)
   if (part.hasForceAnim) forceRigs.push(createForceArrows(S.scene, mesh))
 
-  // 在这件的跳头上摆好交互斗，作为下一件的可见"落座点"
-  for (const c of connectorsOn(partId)) S.addPart(buildDouMesh(c.dims), c)
+  placedMeshes.set(partId, mesh)
+  refreshExploder()
+  hud.showExplode() // 放下第一件即可切到拆解图查看
 
   showCurrentStep()
 }
 
 function finish() {
-  hud.setHint('大功告成！一朵七铺作双杪双下昂已重建。观察力如何从撩檐槫层层传落柱头。')
+  S.hideMarker()
+  hud.setHint('大功告成！一朵七铺作双杪双下昂已重建。点「拆解图」可把它逐件炸开细看。')
   hud.showChallenge()
   codex.open()
   // 整朵受力总览：让所有受力箭头持续演示
+}
+
+// 用当前已放好的构件（按装配顺序）刷新拆解图数据
+function refreshExploder() {
+  const parts = [...placedMeshes.entries()].map(([partId, mesh]) => {
+    const p = getPart(partId)
+    return {
+      mesh, name: p.name, pinyin: p.pinyin,
+      assembledPos: placementFor(partId).pos,
+      order: ASSEMBLY_STEPS.findIndex(s => s.partId === partId),
+    }
+  })
+  exploder.setParts(parts)
+}
+
+// 切换拆解图：炸开时收起零件盘/虚影，避免与装配流程打架
+function toggleExplode(on) {
+  exploder.setExploded(on)
+  if (on && ghost) { S.scene.remove(ghost); ghost = null }
+  if (on) S.hideMarker()
+  tray.el.style.display = on ? 'none' : ''
+  if (!on) showCurrentStep()
 }
 
 // 虚影"呼吸"以便定位；正在拖动的部件对准卯口时染绿自发光，"对齐了"一目了然
 function updateGhostCue(now) {
   if (ghost) {
     const t = (now % 1500) / 1500
-    ghost.material.opacity = 0.07 + 0.09 * (0.5 - 0.5 * Math.cos(t * Math.PI * 2))
+    ghost.material.opacity = 0.26 + 0.16 * (0.5 - 0.5 * Math.cos(t * Math.PI * 2)) // 锈橙虚影明显呼吸
   }
   const step = game.currentStep()
   if (dragMesh && dragMesh.material.emissive) {
@@ -145,8 +196,31 @@ let last = performance.now()
   updateGhostCue(now)
   for (let i = tweens.length - 1; i >= 0; i--) if (tweens[i](dt)) tweens.splice(i, 1)
   for (const rig of forceRigs) rig.update(dt)
+  exploder.update(dt)
   requestAnimationFrame(animate)
 })(performance.now())
 
 S.start()
-showCurrentStep()
+
+// 调试：?demo 一次性放完所有构件并定住总览相机，便于无头截图自检
+if (new URLSearchParams(location.search).has('demo')) {
+  let s
+  while ((s = game.currentStep())) {
+    const mesh = buildPartMesh(s.partId)
+    S.addPart(mesh, placementFor(s.partId))
+    placedMeshes.set(s.partId, mesh)
+    game.tryPlace(s.partId)
+  }
+  if (ghost) { S.scene.remove(ghost); ghost = null }
+  S.hideMarker()
+  tray.el.style.display = 'none'
+  // 截图自检：?demo&view=side 取正侧立面（斗栱断面视角），最便于看层叠坐实
+  const view = new URLSearchParams(location.search).get('view')
+  if (view === 'side') {
+    S.camera.position.set(0.6, 0.6, 6.2)
+    S.controls.target.set(0.6, 0.6, 0)
+    S.controls.update()
+  }
+} else {
+  showCurrentStep()
+}

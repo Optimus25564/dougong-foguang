@@ -1,27 +1,118 @@
-body { font-family: system-ui, "PingFang SC", sans-serif; color: #f0e6d8; }
-.hud { position: fixed; top: 16px; left: 16px; background: rgba(26,21,18,.8);
-  padding: 14px 18px; border-radius: 10px; max-width: 320px; }
-.hud-hint { margin-top: 8px; line-height: 1.5; color: #e8c98a; }
-.tray { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-  display: flex; gap: 12px; }
-.tray-item { background: #8a5a34; padding: 12px 20px; border-radius: 8px;
-  cursor: grab; border: 2px solid #b98a5a; }
-.tray-pinyin { opacity: .7; margin-left: 6px; font-size: .85em; }
-.annotation-card { position: fixed; right: 20px; top: 50%; transform: translateY(-50%);
-  width: 320px; background: rgba(26,21,18,.92); padding: 20px 24px; border-radius: 12px;
-  border-left: 4px solid #e8c98a; line-height: 1.6; }
-.annotation-card .pinyin { opacity: .6; font-weight: normal; font-size: .8em; }
-.annotation-card .term { color: #e8c98a; font-size: .9em; margin: 6px 0 12px; }
-.annotation-card .trivia { color: #cbb58a; font-style: italic; }
-.codex { position: fixed; inset: 0; background: rgba(10,8,6,.94); padding: 40px;
-  overflow: auto; }
+/* ── 无用研究社·海报风皮肤 ─────────────────────────────
+   米黄做旧纸底、锈橙宋体、赭红虚线引线式讲解卡、朱印落款、圆形水印 */
+:root {
+  --paper:      #e7dcc4;   /* 做旧纸底 */
+  --paper-card: #efe7d4;   /* 卡片纸面 */
+  --paper-deep: #ddceb0;   /* 纸底暗部 */
+  --ink:        #3b2c1d;   /* 墨褐正文 */
+  --ink-soft:   #6b5740;   /* 次要文字 */
+  --rust:       #b5451c;   /* 锈橙——标题/引线/重点 */
+  --rust-deep:  #8f3413;   /* 深赭 */
+  --seal:       #a5321f;   /* 朱印红 */
+  --serif: "Songti SC", "STSong", "SimSun", "Source Han Serif SC", serif;
+}
+
+body {
+  font-family: var(--serif);
+  color: var(--ink);
+}
+
+/* 圆形淡水印（居中，位于 3D 画布之上、UI 之下，不挡操作） */
+.paper-watermark {
+  position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: 68vmin; height: 68vmin; border-radius: 50%;
+  border: 2px solid rgba(143, 52, 19, .10);
+  box-shadow: inset 0 0 0 14px rgba(143, 52, 19, .04);
+  pointer-events: none; z-index: 1;
+}
+
+/* ── HUD（左上进度 + 提示） ───────────────────────── */
+.hud {
+  position: fixed; top: 20px; left: 20px; z-index: 3;
+  background: linear-gradient(180deg, var(--paper-card), var(--paper-deep));
+  padding: 16px 20px; border-radius: 4px; max-width: 340px;
+  border: 1px solid rgba(143, 52, 19, .28);
+  box-shadow: 0 6px 22px rgba(59, 44, 29, .18);
+}
+.hud-title {
+  font-size: 22px; font-weight: 800; color: var(--rust);
+  letter-spacing: .06em; line-height: 1;
+}
+.hud-sub { font-size: 12px; color: var(--ink-soft); margin: 4px 0 12px; letter-spacing: .18em; }
+.hud-progress { font-size: 13px; color: var(--ink-soft); }
+.hud-count { color: var(--rust-deep); font-weight: 700; }
+.hud-hint { margin-top: 8px; line-height: 1.7; color: var(--ink); font-size: 14px; }
+
+/* ── 零件盘（底部） ───────────────────────────────── */
+.tray {
+  position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 12px; z-index: 3;
+}
+.tray-item {
+  background: linear-gradient(180deg, #b07a44, #8a5a30);
+  color: #f6ecd8; padding: 12px 22px; border-radius: 4px; cursor: grab;
+  border: 1px solid var(--rust-deep);
+  box-shadow: 0 5px 16px rgba(59, 44, 29, .3);
+  display: flex; align-items: baseline; gap: 8px;
+}
+.tray-name { font-size: 17px; font-weight: 700; }
+.tray-pinyin { opacity: .75; font-size: .8em; letter-spacing: .04em; }
+
+/* ── 讲解卡（右侧·虚线引线风） ─────────────────────── */
+.annotation-card {
+  position: fixed; right: 24px; top: 50%; transform: translateY(-50%);
+  width: 330px; z-index: 3;
+  background: linear-gradient(180deg, var(--paper-card), var(--paper-deep));
+  padding: 20px 24px; border-radius: 4px; line-height: 1.7;
+  border: 1px dashed var(--rust); box-shadow: 0 8px 26px rgba(59, 44, 29, .22);
+}
+.annotation-card h2 {
+  margin: 0 0 2px; font-size: 24px; color: var(--rust); font-weight: 800; letter-spacing: .04em;
+}
+.annotation-card .pinyin { opacity: .6; font-weight: normal; font-size: .5em; letter-spacing: .05em; }
+.annotation-card .term {
+  color: var(--rust-deep); font-size: .82em; margin: 4px 0 12px;
+  padding-left: 10px; border-left: 3px solid var(--rust);
+}
+.annotation-card .role { margin: 8px 0; }
+.annotation-card .role b { color: var(--rust-deep); }
+.annotation-card .desc { color: var(--ink); }
+.annotation-card .trivia { color: var(--ink-soft); font-style: italic; margin-top: 10px; }
+
+/* ── 图鉴 ─────────────────────────────────────────── */
+.codex {
+  position: fixed; inset: 0; z-index: 10; padding: 48px 40px; overflow: auto;
+  background:
+    radial-gradient(120vmin 120vmin at 50% 40%, rgba(143,52,19,.06), transparent 60%),
+    var(--paper);
+  color: var(--ink);
+}
 .codex.hidden { display: none; }
-.codex-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-.codex-page { border: 1px solid #4a3a2a; border-radius: 8px; padding: 20px; text-align: center; }
-.codex-page.locked { opacity: .3; filter: grayscale(1); }
-.codex-page.unlocked { border-color: #e8c98a; }
-.hud-codex { background: #8a5a34; padding: 8px 16px; border-radius: 6px;
-  cursor: pointer; border: 1px solid #b98a5a; color: #f0e6d8; margin-top: 8px; }
-.codex-close { position: absolute; top: 20px; right: 20px; background: #8a5a34;
-  padding: 8px 16px; border-radius: 6px; cursor: pointer; border: 1px solid #b98a5a;
-  color: #f0e6d8; }
+.codex h2 { color: var(--rust); font-size: 30px; font-weight: 800; letter-spacing: .1em; text-align: center; }
+.codex-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; max-width: 900px; margin: 24px auto 0; }
+.codex-page {
+  border: 1px dashed rgba(143, 52, 19, .4); border-radius: 4px; padding: 22px; text-align: center;
+  background: var(--paper-card);
+}
+.codex-page.locked { opacity: .35; filter: grayscale(.7); }
+.codex-page.unlocked { border-style: solid; border-color: var(--rust); }
+.codex-title { font-size: 18px; font-weight: 700; color: var(--rust-deep); }
+
+/* ── 按钮 ─────────────────────────────────────────── */
+.hud-codex, .codex-close, .hud-challenge, .hud-explode {
+  font-family: var(--serif); background: linear-gradient(180deg, #b07a44, #8a5a30);
+  color: #f6ecd8; padding: 8px 16px; border-radius: 4px; cursor: pointer;
+  border: 1px solid var(--rust-deep); font-size: 14px; margin-top: 10px; margin-right: 8px;
+}
+.hud-explode[aria-pressed="true"] { background: linear-gradient(180deg, var(--rust), var(--rust-deep)); }
+.codex-close { position: absolute; top: 24px; right: 28px; margin: 0; }
+
+/* ── 拆解图引线标签 ───────────────────────────────── */
+.explode-label {
+  position: absolute; transform: translateY(-50%);
+  font-size: 15px; font-weight: 700; color: var(--rust-deep);
+  white-space: nowrap; pointer-events: none;
+  text-shadow: 0 1px 2px rgba(231, 220, 196, .95), 0 0 2px rgba(231, 220, 196, .95);
+}
+.explode-label.left { transform: translate(-100%, -50%); }
+.explode-label .py { font-size: .72em; color: var(--ink-soft); font-weight: 400; margin-left: 4px; }
