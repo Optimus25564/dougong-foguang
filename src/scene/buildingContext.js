@@ -1,5 +1,7 @@
 import * as THREE from 'three'
 import { placementFor } from '../content/placements.js'
+import { getPart } from '../content/parts.js'
+import { FEN_TO_M } from '../constants.js'
 
 // 一开间建筑语境：把主角斗栱放回它所属的木构框架里，示意化、哑光、
 // 明显区别于主角木色。用以回答"斗栱如何坐柱、如何入墙、如何托檐"。
@@ -36,6 +38,39 @@ function tag(mesh, name, maxOpacity) {
   mesh.material.opacity = maxOpacity
   mesh.castShadow = mesh.receiveShadow = true
   return mesh
+}
+
+// 昂尾杠杆：把两根下昂向室内（-X）延长的昂尾，及压住昂尾的草栿——只在受力·语境里出现，
+// 讲清"昂尖在外挑檐、昂尾在内被屋架（草栿）死死压住，以栌斗一线为支点"的杠杆两端。
+const TAIL_MAT = () => new THREE.MeshStandardMaterial({ color: 0x9c6b3f, roughness: 0.85, transparent: true }) // 昂尾（续主角木色）
+const CAOFU_MAT = () => new THREE.MeshStandardMaterial({ color: 0x6f5f50, roughness: 0.9, transparent: true })  // 草栿（室内暗梁，哑灰）
+
+function addLever(group) {
+  const tailLen = 0.55
+  let deepestX = 0, topY = -Infinity
+  for (const id of ['xiaang-1', 'xiaang-2']) {
+    const pl = placementFor(id), part = getPart(id)
+    const rotZ = pl.rotZ || 0
+    const half = (part.dims.length * FEN_TO_M) / 2
+    const guang = part.dims.caiGuang * FEN_TO_M
+    const hou = part.dims.houDou * FEN_TO_M
+    const cos = Math.cos(rotZ), sin = Math.sin(rotZ)
+    // 昂内端世界坐标（几何中心在原点，内端 local -half；rotZ 旋转后 + 装配位）
+    const ex = pl.pos[0] + (-half) * cos
+    const ey = pl.pos[1] + (-half) * sin
+    const dx = -cos, dy = -sin           // 向内单位向量（-X、+Y）
+    const tail = new THREE.Mesh(new THREE.BoxGeometry(tailLen, guang, hou), TAIL_MAT())
+    tail.position.set(ex + dx * (tailLen / 2), ey + dy * (tailLen / 2), pl.pos[2])
+    tail.rotation.z = rotZ
+    group.add(tag(tail, 'ang-tail', 1))
+    const endX = ex + dx * tailLen, endTop = ey + dy * tailLen + guang / 2
+    if (endX < deepestX) deepestX = endX
+    if (endTop > topY) topY = endTop
+  }
+  // 草栿：压在两昂尾之上的室内大梁，沿进深（X）横陈，压住杠杆内端
+  const caofu = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.15, 0.18), CAOFU_MAT())
+  caofu.position.set(deepestX + 0.17, topY - 0.03, 0)
+  group.add(tag(caofu, 'caofu', 1))
 }
 
 export function createBuildingContext() {
@@ -84,6 +119,8 @@ export function createBuildingContext() {
   const ground = new THREE.Mesh(new THREE.BoxGeometry(4, 0.04, 4), MAT.stone())
   ground.position.set(0.4, GROUND - 0.02, -BAY / 2)
   group.add(tag(ground, 'ground', 0.55))
+
+  addLever(group)
 
   function setOpacity(v) {
     for (const c of group.children) {

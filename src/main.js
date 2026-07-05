@@ -217,7 +217,7 @@ function enterForce() {
   S.scene.add(context.group)
   tweens.push(fadeTween(context.setOpacity, 0, 1, 0.6))
   // 断面 3/4 视角：既看清出跳（+X），又看清开间与墙（沿 -Z 退向深处）
-  tweens.push(frameTo(S.camera, S.controls, [2.7, 0.95, 3.1], [0.30, 0.36, -0.45], { duration: 1.1 }))
+  tweens.push(frameTo(S.camera, S.controls, [1.7, 0.85, 3.5], [0.05, 0.5, -0.28], { duration: 1.1 }))
   tour.start(renderTourCard)
 }
 
