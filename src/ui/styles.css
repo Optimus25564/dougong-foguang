@@ -94,9 +94,16 @@ body {
   border: 1px dashed rgba(143, 52, 19, .4); border-radius: 4px; padding: 22px; text-align: center;
   background: var(--paper-card);
 }
-.codex-page.locked { opacity: .35; filter: grayscale(.7); }
+.codex-page.locked { opacity: .4; filter: grayscale(.7); }
 .codex-page.unlocked { border-style: solid; border-color: var(--rust); }
+.codex-thumb {
+  display: block; width: 100%; aspect-ratio: 1 / 1; height: auto; margin: 0 auto 10px;
+  object-fit: contain;
+}
+.codex-thumb-empty { background: radial-gradient(closest-side, rgba(143,52,19,.06), transparent); }
 .codex-title { font-size: 18px; font-weight: 700; color: var(--rust-deep); }
+.codex-py { font-size: .62em; font-weight: 400; color: var(--ink-soft); letter-spacing: .04em; }
+.codex-term { font-size: 13px; color: var(--ink-soft); margin-top: 2px; }
 
 /* ── 按钮 ─────────────────────────────────────────── */
 .hud-codex, .codex-close, .hud-challenge, .hud-explode, .hud-force {

@@ -311,6 +311,9 @@ if (new URLSearchParams(location.search).has('demo')) {
     S.controls.update()
   } else if (view === 'force') {
     hud.showForce(); hud.setForcePressed(true); toggleForce(true) // 受力·语境自检
+  } else if (view === 'codex') {
+    for (const s of ASSEMBLY_STEPS) codex.unlock(s.partId) // 全解锁，缩略图上色
+    codex.open()
   }
 } else {
   showCurrentStep()
