@@ -38,15 +38,24 @@ export function createDouGeometry(dims) {
   ping.translate(0, -d.height / 2 + d.xieH + d.pingH / 2, 0)
   geos.push(ping)
 
-  // 耳：顶面四角方块，中留十字斗口（纳其上的栱/昂，被四耳夹住）
-  const earSide = (d.width - d.kou) / 2      // 角块在 X/Z 方向的边长
-  const off = d.kou / 2 + earSide / 2        // 角块中心到斗轴的距离
+  // 耳：顶面开斗口。交互斗/栌斗为十字口（四角耳）；散斗为顺身单口（两耳夹一道槽，
+  // 槽沿进深 Z 贯通——散斗在栱端只承一个方向的枋/栱，据《营造法式》不作十字口）。
+  const earSide = (d.width - d.kou) / 2      // 耳块在开槽方向的边长
+  const off = d.kou / 2 + earSide / 2        // 耳块中心到斗轴的距离
   const earY = d.height / 2 - d.earH / 2
-  for (const sx of [-1, 1]) {
-    for (const sz of [-1, 1]) {
-      const ear = new THREE.BoxGeometry(earSide, d.earH, earSide)
-      ear.translate(sx * off, earY, sz * off)
+  if (dims.singleKou) {
+    for (const sx of [-1, 1]) {              // 沿 X 两侧各一长条耳，中留一道沿 Z 的顺身口
+      const ear = new THREE.BoxGeometry(earSide, d.earH, d.depth)
+      ear.translate(sx * off, earY, 0)
       geos.push(ear)
+    }
+  } else {
+    for (const sx of [-1, 1]) {
+      for (const sz of [-1, 1]) {            // 四角耳，中留十字口
+        const ear = new THREE.BoxGeometry(earSide, d.earH, earSide)
+        ear.translate(sx * off, earY, sz * off)
+        geos.push(ear)
+      }
     }
   }
   return mergeGeometries(geos)

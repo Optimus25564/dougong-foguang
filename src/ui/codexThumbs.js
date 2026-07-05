@@ -30,8 +30,9 @@ export function renderPartThumbnails(size = 150) {
     box.setFromObject(mesh)
     box.getCenter(center); box.getSize(sizeV)
     const r = Math.max(sizeV.x, sizeV.y, sizeV.z) || 0.1
-    // 3/4 俯视：略偏右上、拉开到能容下最长边
-    cam.position.set(center.x + r * 1.3, center.y + r * 1.0, center.z + r * 2.1)
+    // 近侧立面的 3/4：压低俯角、偏侧向，让栱/昂/枋的侧轮廓（卷杀、昂嘴）看得清，
+    // 而非俯视压成"驼峰"
+    cam.position.set(center.x + r * 0.75, center.y + r * 0.42, center.z + r * 2.4)
     cam.lookAt(center)
     cam.updateProjectionMatrix()
     renderer.render(scene, cam)

@@ -38,7 +38,7 @@ export const PARTS = [
   },
   {
     id: 'sandou-1', name: '散斗·泥道右', term: '散斗', pinyin: 'sǎndǒu',
-    dims: { fang: 16, height: 10, ear: 4, ping: 2, xie: 4, kouWidth: 6 },
+    dims: { fang: 16, height: 10, ear: 4, ping: 2, xie: 4, kouWidth: 6, singleKou: true },
     juansha: null, layer: 2.3, parents: ['nidaogong'],
     role: '坐于泥道栱右端栱头，与左端散斗一同承托其上的柱头枋。',
     desc: '散斗是置于栱两端的小斗，斗口向上。它落在泥道栱的栱头上，托起沿墙通长的柱头枋——枋不落斗口，而是搁在这一对散斗上。',
@@ -47,7 +47,7 @@ export const PARTS = [
   },
   {
     id: 'sandou-2', name: '散斗·泥道左', term: '散斗', pinyin: 'sǎndǒu',
-    dims: { fang: 16, height: 10, ear: 4, ping: 2, xie: 4, kouWidth: 6 },
+    dims: { fang: 16, height: 10, ear: 4, ping: 2, xie: 4, kouWidth: 6, singleKou: true },
     juansha: null, layer: 2.6, parents: ['nidaogong'],
     role: '坐于泥道栱左端栱头，与右端散斗一同承托其上的柱头枋。',
     desc: '散斗对称置于泥道栱两端，斗口向上，共承柱头枋。左右两散斗把枋的重量分落到泥道栱的两个栱头上。',
@@ -101,7 +101,7 @@ export const PARTS = [
   },
   {
     id: 'sandou-5', name: '散斗·瓜子右', term: '散斗', pinyin: 'sǎndǒu',
-    dims: { fang: 16, height: 10, ear: 4, ping: 2, xie: 4, kouWidth: 6 },
+    dims: { fang: 16, height: 10, ear: 4, ping: 2, xie: 4, kouWidth: 6, singleKou: true },
     juansha: null, layer: 6.2, parents: ['guazigong'],
     role: '坐于瓜子栱右端栱头，与左端散斗一同承其上的慢栱。',
     desc: '散斗置于瓜子栱右端，斗口向上，承接上一层更长的慢栱——瓜子栱与慢栱上下相叠，即「重栱」计心之制。',
@@ -110,7 +110,7 @@ export const PARTS = [
   },
   {
     id: 'sandou-6', name: '散斗·瓜子左', term: '散斗', pinyin: 'sǎndǒu',
-    dims: { fang: 16, height: 10, ear: 4, ping: 2, xie: 4, kouWidth: 6 },
+    dims: { fang: 16, height: 10, ear: 4, ping: 2, xie: 4, kouWidth: 6, singleKou: true },
     juansha: null, layer: 6.3, parents: ['guazigong'],
     role: '坐于瓜子栱左端栱头，与右端散斗一同承其上的慢栱。',
     desc: '散斗对称置于瓜子栱两端，斗口向上，共承慢栱。左右散斗把慢栱的重量分落到瓜子栱两端。',
@@ -128,7 +128,7 @@ export const PARTS = [
   },
   {
     id: 'sandou-7', name: '散斗·慢栱右', term: '散斗', pinyin: 'sǎndǒu',
-    dims: { fang: 16, height: 10, ear: 4, ping: 2, xie: 4, kouWidth: 6 },
+    dims: { fang: 16, height: 10, ear: 4, ping: 2, xie: 4, kouWidth: 6, singleKou: true },
     juansha: null, layer: 6.5, parents: ['mangong'],
     role: '坐于慢栱右端栱头，与左端散斗一同承其上的罗汉枋。',
     desc: '散斗置于慢栱右端，斗口向上，承接通长的罗汉枋——罗汉枋沿墙面横陈，把相邻各朵在此跳连成一气。',
@@ -137,7 +137,7 @@ export const PARTS = [
   },
   {
     id: 'sandou-8', name: '散斗·慢栱左', term: '散斗', pinyin: 'sǎndǒu',
-    dims: { fang: 16, height: 10, ear: 4, ping: 2, xie: 4, kouWidth: 6 },
+    dims: { fang: 16, height: 10, ear: 4, ping: 2, xie: 4, kouWidth: 6, singleKou: true },
     juansha: null, layer: 6.55, parents: ['mangong'],
     role: '坐于慢栱左端栱头，与右端散斗一同承其上的罗汉枋。',
     desc: '散斗对称置于慢栱两端，斗口向上，共承罗汉枋。左右散斗把罗汉枋的重量分落到慢栱两端。',
@@ -209,7 +209,7 @@ export const PARTS = [
   },
   {
     id: 'sandou-3', name: '散斗·令右', term: '散斗', pinyin: 'sǎndǒu',
-    dims: { fang: 16, height: 10, ear: 4, ping: 2, xie: 4, kouWidth: 6 },
+    dims: { fang: 16, height: 10, ear: 4, ping: 2, xie: 4, kouWidth: 6, singleKou: true },
     juansha: null, layer: 12.3, parents: ['linggong'],
     role: '坐于令栱右端栱头，与左端散斗一同承托其上的替木。',
     desc: '散斗置于令栱右端栱头，斗口向上。替木不直接压在栱背，而是搁在这一对散斗上——散斗把替木、乃至撩檐槫的重量分落到令栱两端。',
@@ -218,7 +218,7 @@ export const PARTS = [
   },
   {
     id: 'sandou-4', name: '散斗·令左', term: '散斗', pinyin: 'sǎndǒu',
-    dims: { fang: 16, height: 10, ear: 4, ping: 2, xie: 4, kouWidth: 6 },
+    dims: { fang: 16, height: 10, ear: 4, ping: 2, xie: 4, kouWidth: 6, singleKou: true },
     juansha: null, layer: 12.6, parents: ['linggong'],
     role: '坐于令栱左端栱头，与右端散斗一同承托其上的替木。',
     desc: '散斗对称置于令栱两端，斗口向上，共承替木。左右两散斗把替木的重量分落到令栱的两个栱头上，令栱不致被一点压伤。',
